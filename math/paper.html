@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OpenAIReview — Math collection review</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P2VZL2X4NX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-P2VZL2X4NX');
-</script>
 <script>
 MathJax = {
   tex: {
@@ -443,7 +435,7 @@ const LOCAL_BACKEND_PORT = !/(^|\.)openaireview\.(org|github\.io)$/.test(locatio
 })();
 const BACKEND_URL = LOCAL_BACKEND_PORT
   ? `http://${location.hostname}:${LOCAL_BACKEND_PORT}`
-  : 'https://openaireview-backend-947059889174.us-central1.run.app';
+  : location.origin;
 const SEVERITY_RANK = { critical: 0, major: 1, moderate: 2, minor: 3 };
 const $ = id => document.getElementById(id);
 let paper, pdfDoc, pageObserver, activeIndex = -1, zoom = 1, redrawTimer;
@@ -539,6 +531,7 @@ function showToast(msg) {
 
 // Send this visitor's current vote and note for one comment. Returns true if the server stored it.
 async function submitFeedback(index) {
+  return false; // Owner-hosted reviews do not submit feedback.
   try {
     const response = await fetch(`${BACKEND_URL}/public-feedback`, {
       method: 'POST',
@@ -592,7 +585,7 @@ function renderHeader(index) {
   $('paper-select').hidden = !index.papers.some(p => p.id === paper.id);
   $('paper-select').innerHTML = index.papers.map(p =>
     `<option value="${escapeHtml(p.id)}" ${p.id === paper.id ? 'selected' : ''}>${p.result_id}. ${escapeHtml(p.title.replace(/<[^>]+>/g, ''))}</option>`).join('');
-  $('paper-select').onchange = e => { location.search = `?paper=${encodeURIComponent(e.target.value)}`; };
+  $('paper-select').onchange = e => { location.search = `?paper=${encodeURIComponent(e.target.value)}${new URLSearchParams(location.search).has('contributed') ? '&contributed=1' : ''}`; };
 
   const model = paper.review.method.replace(/^.*, /, '');
   const metrics = [
@@ -601,7 +594,7 @@ function renderHeader(index) {
     `Reviewer <strong>${escapeHtml(model)}</strong>`,
     paper.review.contributor ? `Contributed by <strong>${escapeHtml(paper.review.contributor)}</strong> on ${escapeHtml(paper.review.date)}${paper.review.pending ? ' (not public yet, waiting for our check)' : ''}`
       : `Reviewed <strong>${paper.review.date}</strong>`,
-    `<a href="${GITHUB}${paper.source_pdf.split('/').map(encodeURIComponent).join('/')}" target="_blank" rel="noopener">Original PDF on GitHub &rarr;</a>`,
+    `<a href="${escapeHtml(paper.pdf)}" target="_blank" rel="noopener">Original PDF &rarr;</a>`,
   ];
   $('metrics-bar').innerHTML = metrics.map(m => `<span class="metric">${m}</span>`).join('<span class="metric-divider"></span>');
 }
@@ -950,17 +943,13 @@ function setupResize() {
   });
 }
 
-// ── Reviews that contributors uploaded ──
-// An uploaded review comes with no position in the PDF. The page shows the collection's own
-// PDF and finds each quoted passage in its text. The PDF is the one at the commit that the review
-// names, or at the commit of our own reviews if it names none. ?contributed=1 shows the approved review of
-// the paper, and ?contributed=<upload id> shows one upload, which can still wait for our check.
-const RAW = 'https://raw.githubusercontent.com/openai/math/';
+// Owner-hosted issues JSON, with source files pinned to the review's commit.
+const RAW = 'source/';
 
 async function loadContributedReview(id, upload, commit) {
   const [catalog, result] = await Promise.all([
     fetch('data/catalog.json').then(r => r.json()),
-    fetch(`${BACKEND_URL}/contributed-reviews/${FEEDBACK_COLLECTION}/${encodeURIComponent(id)}${/^[0-9a-f]{32}$/.test(upload) ? `?upload=${upload}` : ''}`).then(r => r.ok ? r.json() : Promise.reject()),
+    fetch(`data/reviews/${encodeURIComponent(id)}.json`).then(r => r.ok ? r.json() : Promise.reject()),
   ]);
   const entry = catalog.find(p => p.id === id);
   const at = /^[0-9a-f]{40}$/.test(result.commit) ? result.commit : commit;
@@ -968,8 +957,7 @@ async function loadContributedReview(id, upload, commit) {
     .map((c, i) => ({ ...c, severity: Object.hasOwn(SEVERITY_RANK, c.severity) ? c.severity : null, order: i, boxes: [] }))
     .sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9) || a.order - b.order);
   return { ...entry, source_pdf: entry.pdf, pdf: `${RAW}${at}/${entry.pdf}`, macros: await sourceMacros(entry.tex, at), comments,
-           review: { method: `${result.agent}, ${result.model}`, date: (result.created_at || '').slice(0, 10),
-                     contributor: result.contributor || 'a contributor', pending: result.status !== 'approved' } };
+           review: { method: `${result.agent}, ${result.model}`, date: (result.created_at || '').slice(0, 10) } };
 }
 
 // Letters and digits only, lower case, with accents and ligatures reduced to plain letters.
@@ -1118,7 +1106,7 @@ async function main() {
   // TODO before a paper can have more than one review: store a review id with each vote.
   // Votes are stored per paper, issue number, and visitor, and every review numbers its issues
   // from 1, so a vote on issue 1 of one review would overwrite the vote on issue 1 of another.
-  document.body.classList.toggle('no-feedback', contributed);
+  document.body.classList.toggle('no-feedback', true); // Feedback is disabled.
   try {
     paper = contributed ? await loadContributedReview(id, upload, index.source.commit)
                         : await fetch(`data/${encodeURIComponent(id)}.json`).then(r => r.json());
@@ -1135,6 +1123,13 @@ async function main() {
       const pages = await loadPageTexts();
       paper.page_sizes = pages.map(pg => [pg.width, pg.height]);
       for (const c of paper.comments) c.boxes = locateInPdf(c.quote || '', pages);
+      // Display findings in PDF reading order; unmatched quotations follow in input order.
+      paper.comments.sort((a, b) => {
+        const position = c => c.boxes.slice().sort((x, y) => x.page - y.page || x.y - y.y || x.x - y.x)[0]
+          || { page: Infinity, y: Infinity, x: Infinity };
+        const x = position(a), y = position(b);
+        return x.page - y.page || x.y - y.y || x.x - y.x || a.order - b.order;
+      });
     }
     renderComments();
     renderPages();

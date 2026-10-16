@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OpenAIReview — Results</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P2VZL2X4NX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-P2VZL2X4NX');
-</script>
 <script>
 MathJax = {
   tex: {
@@ -855,6 +847,7 @@ function showToast(msg) {
 }
 
 async function syncResolved(commentId, resolved) {
+  return; // The hosted backend is disabled in this fork.
   try {
     await fetch(`${BACKEND_URL}/resolved`, {
       method: 'POST',
@@ -865,6 +858,7 @@ async function syncResolved(commentId, resolved) {
 }
 
 async function fetchVoteState() {
+  return; // The hosted backend is disabled in this fork.
   const token = getToken();
   if (!paper || token === 'unknown') return;
   try {
@@ -889,6 +883,7 @@ async function fetchVoteState() {
 }
 
 async function fetchResolvedState() {
+  return; // The hosted backend is disabled in this fork.
   const token = getToken();
   if (!paper || token === 'unknown') return;
   try {
@@ -912,6 +907,7 @@ async function fetchResolvedState() {
 }
 
 async function submitFeedback(payload) {
+  return; // The hosted backend is disabled in this fork.
   try {
     await fetch(`${BACKEND_URL}/feedback`, {
       method: 'POST',
@@ -1308,6 +1304,7 @@ function showStatus(title, msg, isError, hint) {
 }
 
 async function pollStatus(token) {
+  return; // The hosted backend is disabled in this fork.
   let resp;
   try {
     resp = await fetch(`${BACKEND_URL}/status/${token}`);
@@ -1363,6 +1360,8 @@ async function pollStatus(token) {
 }
 
 async function init() {
+  showStatus('Owner-hosted reviews', 'Use the local PDF viewer generated from your review JSON.', false, '<a href="contribute.html">Local workflow guide</a>');
+  return; // No review token is sent to the official service.
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
 

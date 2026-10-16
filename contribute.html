@@ -4,16 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="canonical" href="https://openaireview.org/contribute.html" />
-<title>Contribute a review — OpenVerification</title>
-<meta name="description" content="Review a paper of the OpenAI math collection with your own coding agent and upload the result to OpenVerification.">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P2VZL2X4NX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-P2VZL2X4NX');
-</script>
+<title>Local review workflow — OpenAIReview</title>
+<meta name="description" content="Generate a review locally with OpenAIReview and display it with the official PDF viewer.">
 <script>
 MathJax = {
   tex: { inlineMath: [['\\(', '\\)']], processEscapes: true },
@@ -142,61 +134,24 @@ pre.skill { max-height: 260px; }
 </div>
 
 <div class="hero">
-  <h1>Contribute a review</h1>
-  <p>Most papers in the OpenAI math collection have no review yet. Run a review with your own coding agent and upload the result. Questions are welcome on our <a href="https://discord.gg/5sPZbzYru" target="_blank" rel="noopener">Discord server</a>.</p>
+  <h1>Review your own paper</h1>
+  <p>Follow the mathematics review instructions and open the findings alongside your PDF.</p>
 </div>
-
 <div class="guide">
   <div class="step">
-    <h2><span class="num">1</span>Choose a paper</h2>
-    <p>The list shows the papers that have no review yet.</p>
-    <input type="search" id="search" placeholder="Search by title or area" aria-label="Search papers">
-    <div class="paper-list" id="paper-list"><div class="empty">Loading papers…</div></div>
-    <div class="chosen-paper" id="chosen-paper" hidden></div>
+    <h2>1. Review the manuscript</h2>
+    <p>Give your coding agent <a href="skill.md">the review instructions</a>, the complete TeX source, its matching PDF and a private work folder outside this repository. Manuscript content is processed by your agent's model provider under its terms.</p>
   </div>
-
   <div class="step">
-    <h2><span class="num">2</span>Run the review with your coding agent</h2>
-    <p>The file below is a skill: a set of instructions that a coding agent such as Claude Code or Codex follows. It tells the agent to download the LaTeX source of the paper, check every proof step with several sub-agents, and write the review as one JSON file.</p>
-    <div class="skill-actions">
-      <button class="btn" id="copy-skill">Copy the skill</button>
-      <a class="btn light" href="skill.md" download="SKILL.md">Download SKILL.md</a>
-    </div>
-    <pre class="box skill" id="skill-text">Loading…</pre>
-    <p style="margin-top:14px">Either paste the text into your agent together with the paper id, or install it as a skill. For Claude Code:</p>
-    <pre class="box">mkdir -p ~/.claude/skills/openverification-review
-curl -o ~/.claude/skills/openverification-review/SKILL.md https://openaireview.org/skill.md</pre>
-    <p style="margin-top:10px">For Codex:</p>
-    <pre class="box">mkdir -p ~/.agents/skills/openverification-review
-curl -o ~/.agents/skills/openverification-review/SKILL.md https://openaireview.org/skill.md</pre>
-    <p style="margin-top:10px">Then start the agent in an empty folder and type this line. In Codex, start the line with <code>$</code> in place of <code>/</code>.</p>
-    <pre class="box" id="run-command">/openverification-review &lt;paper id&gt;</pre>
-    <p class="hint" style="margin-top:10px">A review takes 15 to 60 minutes. Use the strongest model that you have. The cost is on your own account with the model provider.</p>
+    <h2>2. Open the PDF review</h2>
+    <p>Follow <a href="README.md">the setup guide</a> to save the review JSON, source snapshot and catalog beside the viewer.</p>
+    <pre class="box">python -m http.server 8080 --bind 127.0.0.1 --directory /path/to/private-review</pre>
+    <p>Open http://127.0.0.1:8080/?paper=paper&amp;contributed=1. Check every highlighted passage against the PDF.</p>
   </div>
-
   <div class="step">
-    <h2><span class="num">3</span>Upload the review</h2>
-    <p>The agent writes <code>openverification_review/openverification_review.json</code>. Upload that file here.</p>
-    <div class="form-grid">
-      <div><label for="file">Review file (JSON)</label><input type="file" id="file" accept=".json,application/json"></div>
-      <div></div>
-      <div><label for="contributor">Your name (optional, shown with the review)</label><input type="text" id="contributor" maxlength="100" autocomplete="name"></div>
-      <div><label for="email">Email (optional, never shown)</label><input type="email" id="email" maxlength="200" autocomplete="email"></div>
-    </div>
-    <button class="btn" id="upload" disabled>Upload</button>
-    <div class="status" id="status" role="status"></div>
-  </div>
-
-  <div class="step">
-    <h2>Guidelines</h2>
-    <ul>
-      <li>Upload the file as the agent wrote it. Please do not add, remove, or reword issues by hand. If you disagree with an issue, mark it as incorrect on the paper page after the review is public.</li>
-      <li>State the agent and the model truthfully. The skill asks the agent to do this.</li>
-      <li>We check each upload before it becomes public, usually within a day. Until then you can open your review at its own link.</li>
-      <li>Each paper has one public review for now. A paper leaves the list when we approve a review of it.</li>
-      <li>An AI review system can be wrong. Mathematicians confirm or reject each issue on the paper page.</li>
-    </ul>
-    <p>To improve the review tool itself, please contribute to the <a href="https://github.com/ChicagoHAI/OpenAIReview" target="_blank" rel="noopener">GitHub repository</a>. To talk to us and to other contributors, join the <a href="https://discord.gg/5sPZbzYru" target="_blank" rel="noopener">Discord server</a>.</p>
+    <h2>3. Share with your readers</h2>
+    <p>Deploy the folder with access for the intended audience. It contains the PDF, TeX source and review.</p>
+    <a class="btn light" href="skill.md" download="SKILL.md">Download review instructions</a>
   </div>
 </div>
 
@@ -327,6 +282,7 @@ async function readFile() {
 }
 
 async function upload() {
+  return false; // External uploads are disabled in this fork.
   $('upload').disabled = true;
   setStatus('', 'Uploading…');
   const body = {
@@ -358,6 +314,7 @@ async function upload() {
 }
 
 async function main() {
+  return; // This page provides local instructions, not an upload service.
   $('copy-skill').onclick = () => copyText($('skill-text').textContent, $('copy-skill'));
   $('file').onchange = readFile;
   $('upload').onclick = upload;

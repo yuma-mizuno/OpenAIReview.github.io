@@ -3,15 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Try on browser — OpenAIReview</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P2VZL2X4NX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-P2VZL2X4NX');
-</script>
+<title>Local review workflow — OpenAIReview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet">
@@ -354,13 +346,13 @@ a:hover { color: var(--accent-hover); }
 <!-- Hero Section for Upload -->
 <div class="hero-wrapper">
   <div class="hero">
-    <h1>Upload your paper</h1>
+    <h1>Review your paper locally</h1>
     <p class="subtitle">
-      Get feedback from our AI reviewer
+      Follow the mathematics review instructions and view findings beside your PDF. <a href="contribute.html">Open the workflow guide</a>.
     </p>
 
     <!-- Upload Section -->
-    <div class="upload-section">
+    <div class="upload-section" style="display:none">
       <div class="upload-card">
         <div id="upload-form">
         <!-- Tab toggle -->
@@ -476,6 +468,7 @@ const BACKEND_URL = (location.hostname === 'localhost' || location.hostname === 
   : 'https://openaireview-backend-947059889174.us-central1.run.app';
 
 function lookupToken() {
+  return; // The hosted review service is disabled in this fork.
   const token = document.getElementById('lookup-input').value.trim();
   if (!token) return;
   window.location.href = `/results.html?token=${encodeURIComponent(token)}`;
@@ -502,6 +495,7 @@ function switchTab(tab) {
 }
 
 function initUpload() {
+  return; // Do not attach manuscript, email or API-key submission handlers.
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('pdf-input');
   const dropLabel = document.getElementById('drop-label');
